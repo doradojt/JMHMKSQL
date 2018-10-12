@@ -6,7 +6,7 @@ actor.last_name as "Actor Last Name"
 FROM actor;
 
 -- Answers 1b
-SELECT CONCAT(actor.first_name,' ',actor.last_name) as 'Full Actor Name'
+SELECT CONCAT(actor.first_name,' ',actor.last_name) as 'Actor Name'
 FROM actor;
 
 -- Answers 2a
@@ -52,12 +52,12 @@ GROUP BY actor.last_name;
 
 -- Answers 4b
 SELECT actor.last_name as "Actor Last Names", 
-COUNT(*) as "Name Count above two"
+COUNT(actor.last_name) as "Name Count above two"
 FROM actor
 GROUP BY actor.last_name
-HAVING COUNT(*) > 2;
+HAVING COUNT(actor.last_name) > 2;
 
--- Answers 4c
+-- Answers 4c first query gets actor ID for actor, then second updates
 SELECT actor.actor_id as "Actor ID", 
 actor.first_name as "First Name", 
 actor.last_name as "Last Name"
@@ -121,11 +121,11 @@ WHERE title = 'Hunchback Impossible';
 -- Answers 6e
 SELECT customer.first_name as 'Customer First Name', 
 customer.last_name as 'Customer Last Name', 
-sum(payment.amount) as 'Total Customer Paid'
+sum(payment.amount) as 'Total Amount Paid'
 FROM payment
 LEFT JOIN customer ON payment.customer_id = customer.customer_id
 GROUP BY customer.first_name, customer.last_name
-ORDER BY customer.first_name, customer.last_name;
+ORDER BY customer.last_name, customer.first_name;
 
 -- Answers 7a 
 SELECT film.title as "English Speaking Film Titles Beginning with K or Q"
