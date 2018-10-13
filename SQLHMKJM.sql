@@ -46,7 +46,7 @@ DROP description;
 
 -- Answers 4a
 SELECT actor.last_name as "Actor Last Names", 
-COUNT(*) as "Name Count"
+COUNT(actor.last_name) as "Name Count"
 FROM actor
 GROUP BY actor.last_name;
 
@@ -58,20 +58,18 @@ GROUP BY actor.last_name
 HAVING COUNT(actor.last_name) > 2;
 
 -- Answers 4c first query gets actor ID for actor, then second updates
-SELECT actor.actor_id as "Actor ID", 
-actor.first_name as "First Name", 
-actor.last_name as "Last Name"
-FROM actor
-WHERE actor.last_name = "WILLIAMS";
-
 UPDATE actor
 SET actor.first_name = "HARPO"
-WHERE actor.actor_id = 172;
+WHERE actor.last_name = "WILLIAMS" 
+AND 
+actor.first_name = "GROUCHO";
 
 -- Answers 4d
 UPDATE actor
 SET actor.first_name = "GROUCHO"
 WHERE actor.first_name = "HARPO";
+
+
 
 -- Answers 5a
 CREATE TABLE address (
@@ -113,10 +111,11 @@ GROUP BY film_actor.actor_id DESC
 limit 10;
 
 -- Answers 6d
-SELECT film.title as 'Title',
-COUNT(film.title) as '# of Copies'
+SELECT film.title as "Title",
+COUNT(inventory.film_id) as "# of Copies"
 FROM film
-WHERE title = 'Hunchback Impossible';
+JOIN inventory ON film.film_id = inventory.film_id
+WHERE film.title = 'Hunchback Impossible';
 
 -- Answers 6e
 SELECT customer.first_name as 'Customer First Name', 
@@ -155,85 +154,79 @@ SELECT actor.first_name as "First Name of Actor in Alone Trip",
 
 -- Answers 7c 
 
-SELECT customer.first_name as "First Name", 
-customer.last_name as "Last Name", 
-customer.email as "Email", 
+SELECT customer.first_name as "First Name",
+customer.last_name as "Last Name",
+customer.email as "Email",
 country.country as "Country"
-FROM city, country, customer, address
-WHERE country.country_id = city.country_id
-AND address.address_id = customer.address_id
-AND country = "Canada"
+FROM country
+INNER JOIN city ON country.country_id = city.country_id
+INNER JOIN address ON city.city_id = address.city_id
+INNER JOIN customer ON address.address_id = customer.address_id
+WHERE country.country = "Canada"
 GROUP BY customer.first_name, customer.last_name
 ORDER BY customer.first_name, customer.last_name;
 
--- Answers 7d (answered 2 ways)
-SELECT film.title as "Family Film Titles"
-FROM film
-WHERE film.film_id IN 
-		(SELECT film_id
-		FROM film_category
-		WHERE category_id = 8
-        );
-
--- 2 WAYS TO COMPLETE, ABOVE AND BELOW
+-- Answers 7d 
 
 SELECT film.title as "Family Film Titles", category.name as "Movie Type"
-FROM film, category, film_category
-WHERE category.category_id = film_category.category_id
-AND film_category.film_id = film.film_id
-AND category.name = 'Family';
+FROM film
+INNER JOIN film_category ON film.film_id = film_category.film_id
+INNER JOIN category ON film_category.category_id = category.category_id
+WHERE category.name = 'Family';
 
--- Answers 7e needs work
-
+-- Answers 7e
 SELECT film.title as "Film Name",
-COUNT(payment.amount) as "# of Rents"
-from payment, rental, inventory, film
-WHERE payment.rental_id = rental.rental_id
-AND rental.inventory_id = inventory.inventory_id
-AND inventory.film_id = film.film_id
-GROUP BY film.title 
-ORDER BY COUNT(payment.amount) DESC;
+COUNT(payment.amount) as "# of Rentals"
+FROM payment
+INNER JOIN rental ON payment.rental_id = rental.rental_id
+INNER JOIN inventory ON rental.inventory_id = inventory.inventory_id
+INNER JOIN film on inventory.film_id = film.film_id
+GROUP BY film.title
+ORDER BY COUNT(payment.amount) DESC, film.title DESC;
 
 -- Answers 7f
 
-SELECT inventory.store_id as "Store",
+SELECT inventory.store_id as "Store ID",
 SUM(film.rental_rate) as "Total Rental in dollars"
 FROM film
 INNER JOIN inventory ON film.film_id = inventory.film_id
 GROUP BY inventory.store_id;
 
 -- Answers 7g
+
 SELECT store.store_id as "Store ID#", 
-city.city as "Store City", 
+city.city as "Store City",
 country.country as "Store Country"
-FROM store, city, country, address
-WHERE store.address_id = address.address_id
-AND city.country_id = country.country_id
-ORDER BY country, city;
+FROM country
+INNER JOIN city ON country.country_id = city.country_id
+INNER JOIN address ON city.city_id = address.city_id
+INNER JOIN store on address.address_id = store.address_id
+ORDER BY store.store_id, city.city, country.country;
 
 -- Answers 7h 
-SELECT category.name as "Top 5 Genres", 
+SELECT category.name as "Top 5 Genres",
 SUM(payment.amount) as "Amount in $"
-FROM category, rental, payment, inventory, film_category
-WHERE rental.rental_id = payment.rental_id
-AND category.category_id = film_category.category_id
-AND inventory.film_id = film_category.film_id
-AND rental.inventory_id = inventory.inventory_id
+FROM inventory
+INNER JOIN rental ON inventory.inventory_id = rental.inventory_id
+INNER JOIN payment ON rental.rental_id = payment.rental_id
+INNER JOIN film_category ON inventory.film_id = film_category.film_id
+INNER JOIN category ON film_category.category_id = category.category_id
 GROUP BY category.name
-ORDER BY sum(payment.amount) DESC
+ORDER BY SUM(payment.amount) DESC
 limit 5;
 
+
 -- Answers 8a
-CREATE VIEW Top_five_Genres AS
-SELECT category.name as "Top 5 Genres", 
+CREATE VIEW Top_five_genres AS
+SELECT category.name as "Top 5 Genres",
 SUM(payment.amount) as "Amount in $"
-FROM category, rental, payment, inventory, film_category
-WHERE rental.rental_id = payment.rental_id
-AND category.category_id = film_category.category_id
-AND inventory.film_id = film_category.film_id
-AND rental.inventory_id = inventory.inventory_id
+FROM inventory
+INNER JOIN rental ON inventory.inventory_id = rental.inventory_id
+INNER JOIN payment ON rental.rental_id = payment.rental_id
+INNER JOIN film_category ON inventory.film_id = film_category.film_id
+INNER JOIN category ON film_category.category_id = category.category_id
 GROUP BY category.name
-ORDER BY sum(payment.amount) DESC
+ORDER BY SUM(payment.amount) DESC
 limit 5;
 
 -- Answers 8b
